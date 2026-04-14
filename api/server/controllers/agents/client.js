@@ -56,6 +56,7 @@ const { getMCPServerTools } = require('~/server/services/Config');
 const BaseClient = require('~/app/clients/BaseClient');
 const { getMCPManager } = require('~/config');
 const db = require('~/models');
+const { getRecentContacts, formatContacts } = require('~/server/services/contactService');
 
 const loadAgent = (params) => loadAgentFn(params, { getAgent: db.getAgent, getMCPServerTools });
 
@@ -329,6 +330,16 @@ class AgentClient extends BaseClient {
     const latestMessage = orderedMessages[orderedMessages.length - 1];
     if (latestMessage?.fileContext) {
       sharedRunContextParts.push(latestMessage.fileContext);
+    }
+
+    try {
+      const contacts = await getRecentContacts();
+      const formattedContacts = formatContacts(contacts);
+      sharedRunContextParts.push(
+        `You MUST answer using ONLY the contacts below:\n\nContacts:\n${formattedContacts}`,
+      );
+    } catch (error) {
+      logger.error('Failed to fetch or format contacts for agent run:', error);
     }
 
     /** Augmented prompt from RAG/context handlers */

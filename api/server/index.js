@@ -1,4 +1,5 @@
 require('dotenv').config();
+require('./db.js');
 const fs = require('fs');
 const path = require('path');
 require('module-alias')({ base: path.resolve(__dirname, '..') });
@@ -36,6 +37,9 @@ const { getAppConfig } = require('./services/Config');
 const staticCache = require('./utils/staticCache');
 const optionalJwtAuth = require('./middleware/optionalJwtAuth');
 const noIndex = require('./middleware/noIndex');
+
+const contactsRoutes = require('./routes/contact.js');
+
 const routes = require('./routes');
 
 const { PORT, HOST, ALLOW_SOCIAL_LOGIN, DISABLE_COMPRESSION, TRUST_PROXY } = process.env ?? {};
@@ -185,6 +189,9 @@ const startServer = async () => {
 
   app.use('/api/tags', routes.tags);
   app.use('/api/mcp', routes.mcp);
+
+  // our feature:
+  app.use('/api/contacts', contactsRoutes);
 
   /** 404 for unmatched API routes */
   app.use('/api', apiNotFound);

@@ -31,6 +31,9 @@ const {
 const { loadAgentTools, loadToolsForExecution } = require('~/server/services/ToolService');
 const { findAccessibleResources } = require('~/server/services/PermissionService');
 const db = require('~/models');
+const { getRecentContacts, formatContacts } = require('~/server/services/contactService');
+
+//my service
 
 /**
  * Creates a tool loader function for the agent.
@@ -289,6 +292,29 @@ const OpenAIChatCompletionController = async (req, res) => {
     const summarizationConfig = appConfig?.summarization;
 
     const openaiMessages = convertMessages(request.messages);
+
+    const contacts = await getRecentContacts();
+    const formattedContacts = formatContacts(contacts);
+
+    // Inject contacts into last user message
+    if (openaiMessages.length > 0) {
+      const lastMsg = openaiMessages[openaiMessages.length - 1];
+
+      if (typeof lastMsg.content === 'string') {
+        lastMsg.content = `
+            You have access to the following contacts:
+
+        ${formattedContacts}
+
+            User question:
+        ${lastMsg.content}  
+`;
+      }
+    }
+
+    console.log('CONTACTS222222222222222:', formattedContacts);
+
+    console.log('CONTACTS:', formattedContacts);
 
     const toolSet = buildToolSet(primaryConfig);
     const {
